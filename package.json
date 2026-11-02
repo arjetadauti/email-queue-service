@@ -1,0 +1,27 @@
+{
+  "name": "email-queue-service",
+  "version": "1.0.0",
+  "description": "Monolithic Express + PostgreSQL API that sends emails through a DB-backed queue and Resend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "worker": "node src/worker.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "check:layers": "node scripts/check-layers.js",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "pg": "^8.23.1",
+    "resend": "^6.37.0",
+    "zod": "^4.6.7"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
