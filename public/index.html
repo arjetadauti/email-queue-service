@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Email Queue</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%234f46e5'/><path d='M5 8l7 5 7-5' stroke='white' stroke-width='2' fill='none'/></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">✉</span>
+      <div>
+        <h1>Email Queue</h1>
+        <p class="tagline">Emails are queued, then sent in the background by a worker.</p>
+      </div>
+    </div>
+    <div id="health" class="health health--unknown" role="status" aria-live="polite">
+      <span class="dot"></span><span id="health-text">Checking…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card" aria-labelledby="send-title">
+      <h2 id="send-title">Send an email</h2>
+      <p class="hint">The API answers right away with <code>202 Accepted</code>. The worker sends it a moment later.</p>
+
+      <form id="email-form" novalidate>
+        <label for="to">To</label>
+        <input id="to" name="to" type="email" placeholder="name@example.com" required autocomplete="email" />
+
+        <label for="subject">Subject</label>
+        <input id="subject" name="subject" type="text" placeholder="Hello!" required maxlength="998" />
+
+        <label for="text">Message</label>
+        <textarea id="text" name="text" rows="5" placeholder="Write your message…" required></textarea>
+
+        <button id="submit" type="submit">Queue email</button>
+        <p id="form-message" class="form-message" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="card card--wide" aria-labelledby="jobs-title">
+      <div class="card-head">
+        <h2 id="jobs-title">Queue</h2>
+        <span class="refresh" id="refresh-note">Auto-refresh every 3s</span>
+      </div>
+
+      <div class="stats">
+        <button class="stat stat--active" data-filter="">
+          <span class="stat-label">All</span><span class="stat-value" id="count-all">–</span>
+        </button>
+        <button class="stat stat--pending" data-filter="pending">
+          <span class="stat-label">Pending</span><span class="stat-value" id="count-pending">–</span>
+        </button>
+        <button class="stat stat--sent" data-filter="sent">
+          <span class="stat-label">Sent</span><span class="stat-value" id="count-sent">–</span>
+        </button>
+        <button class="stat stat--failed" data-filter="failed">
+          <span class="stat-label">Failed</span><span class="stat-value" id="count-failed">–</span>
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>To</th>
+              <th>Subject</th>
+              <th>Attempts</th>
+              <th>Details</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-body">
+            <tr><td colspan="6" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Endpoints: <code>POST /emails</code> · <code>GET /emails</code> · <code>GET /health</code>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
