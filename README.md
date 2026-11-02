@@ -1,11 +1,14 @@
 # Email Queue Service
 
-A small monolithic backend (Node.js · Express 5 · PostgreSQL) that **queues emails and sends them in the background through [Resend](https://resend.com/docs)**, with automatic retries, a `/health` endpoint, and production monitoring on [Asniher](https://asniher.com/).
+A small monolithic app (Node.js · Express 5 · PostgreSQL) with a one-page frontend that **queues emails and sends them in the background through [Resend](https://resend.com/docs)**, with automatic retries, a `/health` endpoint, and production monitoring on [Asniher](https://asniher.com/).
+
+![Email Queue frontend](docs/frontend.png)
 
 - API endpoints never send email directly — they insert a job and return `202 Accepted`.
 - A background worker claims due jobs, sends them via Resend, and records the outcome.
 - Every job has a status in the database: `pending` → `sent` or `failed`.
 - Failed sends are retried **3 times** (4 attempts in total) with exponential backoff.
+- The frontend (served by the same app at `/`) lets you send an email and watch it move from `pending` to `sent` or `failed`.
 
 **Live URL:** `https://<your-app>.onrender.com` · **Monitor:** see [Monitoring](#monitoring)
 
@@ -14,13 +17,14 @@ A small monolithic backend (Node.js · Express 5 · PostgreSQL) that **queues em
 ## Contents
 
 1. [Architecture](#architecture)
-2. [Setup](#setup)
-3. [Environment variables](#environment-variables)
-4. [API and example requests](#api-and-example-requests)
-5. [How the queue works](#how-the-queue-works)
-6. [Deployment](#deployment)
-7. [Monitoring](#monitoring)
-8. [Project structure](#project-structure)
+2. [Frontend](#frontend)
+3. [Setup](#setup)
+4. [Environment variables](#environment-variables)
+5. [API and example requests](#api-and-example-requests)
+6. [How the queue works](#how-the-queue-works)
+7. [Deployment](#deployment)
+8. [Monitoring](#monitoring)
+9. [Project structure](#project-structure)
 
 ---
 
@@ -30,7 +34,8 @@ The code is split into four layers. **Each layer may only call the layer directl
 
 ```mermaid
 flowchart TD
-    Client([HTTP client]) -->|JSON over HTTP| API
+    Browser([Browser · public/ frontend]) -->|fetch: POST /emails, GET /emails, GET /health| API
+    Client([curl / HTTP client]) -->|JSON over HTTP| API
     Monitor([Asniher monitor]) -->|GET /health every 5 min| API
 
     subgraph App["Monolith (one Node.js process)"]
@@ -73,6 +78,20 @@ Services throw **domain errors** (`NotFoundError`, `DomainValidationError`); onl
 
 ---
 
+## Frontend
+
+The app serves a single page from `public/` at **`/`** (no build step, no framework). It only talks to the API, the same way `curl` would:
+
+| Part of the page | Endpoint |
+|---|---|
+| **Send an email** form | `POST /emails` → shows validation errors from the API next to the fields |
+| **Queue** table (auto-refreshes every 3 s, filter by status) | `GET /emails?status=…` |
+| Health pill and the pending / sent / failed counters | `GET /health` |
+
+Each row shows the status, the attempts (`3 / 4`), the last error, and when the next retry happens, so retries can be watched live. All text from the API is inserted with `textContent`, so user input can't inject HTML.
+
+---
+
 ## Setup
 
 ### Requirements
@@ -93,7 +112,7 @@ createdb email_queue            # or create it in pgAdmin
 
 npm run migrate                 # create tables + indexes
 npm run seed                    # optional: demo jobs (sent to Resend test inboxes)
-npm start                       # API on http://localhost:3000 + background worker
+npm start                       # app on http://localhost:3000 (frontend + API) + background worker
 ```
 
 ### Option B — Docker Compose (PostgreSQL included)
@@ -357,6 +376,7 @@ Because `/health` returns `503` when PostgreSQL is unreachable, the monitor mark
 ├── migrations/                 # SQL migrations, applied in filename order
 │   ├── 001_create_email_jobs.sql
 │   └── 002_add_email_jobs_indexes.sql
+├── public/                     # frontend: index.html, styles.css, app.js (served at /)
 ├── scripts/
 │   ├── migrate.js              # CLI → data/migrator
 │   ├── seed.js                 # CLI → data/seeder
@@ -386,6 +406,7 @@ Because `/health` returns `503` when PostgreSQL is unreachable, the monitor mark
 │   ├── config.js               # env → config
 │   ├── server.js               # entry: API + in-process worker
 │   └── worker.js               # entry: standalone worker
+├── docs/                       # screenshots (frontend, Asniher monitor)
 ├── test/emailService.test.js
 ├── .env.example
 ├── Dockerfile
