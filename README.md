@@ -10,7 +10,7 @@ A small monolithic app (Node.js · Express 5 · PostgreSQL) with a one-page fron
 - Failed sends are retried **3 times** (4 attempts in total) with exponential backoff.
 - The frontend (served by the same app at `/`) lets you send an email and watch it move from `pending` to `sent` or `failed`.
 
-**Live URL:** `https://<your-app>.onrender.com` · **Monitor:** see [Monitoring](#monitoring)
+**Live URL:** `https://email-queue-service-2s9i.onrender.com` · **Monitor:** see [Monitoring](#monitoring)
 
 ---
 
@@ -339,7 +339,7 @@ Indexes: a partial index on `next_attempt_at WHERE status = 'pending'` for the w
 2. In Render: **New → Blueprint**, choose the repo. It creates the web service and a PostgreSQL database and wires `DATABASE_URL` automatically.
 3. In the web service's **Environment** tab set `RESEND_API_KEY` and `EMAIL_FROM`.
 4. Deploy. The start command runs `npm run migrate` and then `npm start`.
-5. Open `https://<your-app>.onrender.com/health` — it should return `200`.
+5. Open `https://email-queue-service-2s9i.onrender.com/health` — it should return `200`.
 
 Notes: free Render web services sleep after ~15 minutes without traffic; the Asniher check every 5 minutes keeps it awake. Render's free PostgreSQL expires after a trial period — for a longer-lived free database use [Neon](https://neon.tech) and set `DATABASE_URL` plus `PGSSL=true`.
 
@@ -357,7 +357,7 @@ docker run -p 3000:3000 --env-file .env email-queue-service
 The `/health` endpoint is monitored with **Asniher**:
 
 1. Create a free account at [asniher.com](https://asniher.com/).
-2. Add an **HTTP(S) monitor**: URL `https://<your-app>.onrender.com/health`, method `GET`, expected status `200`, interval 5 minutes (free plan). Optionally add a keyword check for `"status":"ok"`.
+2. Add an **HTTP(S) monitor**: URL `https://email-queue-service-2s9i.onrender.com/health`, method `GET`, expected status `200`, interval 5 minutes (free plan). Optionally add a keyword check for `"status":"ok"`.
 3. Add an alert channel (email, Slack or Discord).
 4. *(Optional)* Add a **Heartbeat monitor** for the queue worker, copy its ping URL into `WORKER_HEARTBEAT_URL`, and redeploy. If the worker loop stops, Asniher alerts you even while the API still answers.
 
